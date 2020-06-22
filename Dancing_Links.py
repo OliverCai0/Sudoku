@@ -1,3 +1,7 @@
+BACKTRACKS = 0
+CONSTRAINTS = 0
+ROWS = 0
+
 class Node():
 
     def __init__(self,right,left,up,down,head):
@@ -30,6 +34,7 @@ def initialize_constraints(constraints):
         if c == len(constraints) - 1:
             curnode.right = head
             curnode.right.left = curnode
+        CONSTRAINTS += 1
     return head
         
 def add_row(head,row):
@@ -55,12 +60,48 @@ def add_row(head,row):
         else:
             nodes_added[i].left = nodes_added[i - 1]
             nodes_added[i].left.right = nodes_added[i]
+    ROWS += 1
+
+def add_rows(head,row_array):
+    for row in row_array:
+        add_row(head,row)
         
 
 
-def search(head):
+def search(head,O = []):
 
-    pass
+    #If R[h] = h, print the current solution and return
+    if head.right == head:
+        for o in range(len(O)):
+            s = O[o].right
+            ans = O[o].head.name + ': '
+            while s != O[o]:
+                ans = ans + s.head.name + ': '
+                s = s.right
+            print(str(o) + '. ' + ans)
+    else:
+        #Otherwise choose a column object c
+        curnode = head.right
+        cover(curnode)
+        r = curnode.down
+        while r != curnode:
+            O.append(r)
+            j = r.right
+            while j != r:
+                cover(j.head)
+                j = j.right
+            search(head,O)
+            r = O.pop()
+            #curnode = r.head
+            j = r.left
+            while j != r:
+                uncover(j)
+                j = j.left
+        uncover(curnode)
+        BACKTRACKS += 1
+
+
+    return True
 
 def cover(col):
     col.right.left = col.left
