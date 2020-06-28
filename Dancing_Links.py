@@ -1,3 +1,5 @@
+import random
+
 BACKTRACKS = 0
 CONSTRAINTS = 0
 ROWS = 0
@@ -49,7 +51,7 @@ def initialize_constraints(constraints):
         
 def add_row(head,row):
     global ROWS
-    print('ROW ' + str(ROWS) + ' :' + row)
+    #print('ROW ' + str(ROWS + 1) + ' :' + row)
     #row is givn in 1..1... string format
     if not isinstance(row,str):
         print('Rows are inputted as string, with nodes represented as 1')
@@ -62,7 +64,7 @@ def add_row(head,row):
     for i in range(len(row)):
         cur_col = cur_col.right
         if row[i] == '1':
-            if not cur_col.down:
+            if cur_col.size == 0:
                 cur_col.down = Node(None,None,cur_col,cur_col,cur_col)
                 cur_col.up = cur_col.down
                 nodes_added.append(cur_col.down)
@@ -79,29 +81,92 @@ def add_row(head,row):
             nodes_added[i].left = nodes_added[i - 1]
             nodes_added[i].left.right = nodes_added[i]
     ROWS += 1
-    print('Successfully added, currently ' + str(ROWS) + ' rows')
+    #print('Successfully added, currently ' + str(ROWS) + ' rows')
     return True
 
 def add_rows(head,row_array):
     for row in row_array:
-        add_row(head,row)
-    return True
+        if not add_row(head,row):
+            break
 
-def search(head,O = []):
+def test_validity_constraints(head):
+    curnode = head.right
+    while head != curnode:
+        if not curnode:
+            print('Got None for right col')
+            print(curnode.left.name)
+            return False
+        curnode = curnode.right
+    curnode = head.left
+    while head != curnode:
+        if not curnode:
+            print('Got none for left col')
+            print(curnode.right.name)
+            return False
+        curnode = curnode.left
+    return curnode == head
+
+def test_val_rows(head):
+    ##test one
+    curnode = head
+    for i in range(random.randint(1,20)):
+        curnode = curnode.right
+    d = curnode.down
+    count = 0
+    while d != curnode:
+        if d == None:
+            print(count)
+            print('Down not fully attached')
+            #print_dlx(head)
+            return False
+        j = d.right
+        jcount = 1
+        while j != d:
+            if j == None:
+                print('right not fully attached')
+                return False
+            j = j.right
+            jcount += 1
+        print(jcount)
+        d = d.down
+        count += 1
+    return d == curnode
+        
+
+def search(head,O = [],output = None,one_answer = False):
     global BACKTRACKS
-    print_dlx(head)
-    print()
+    #print_dlx(head)
+    #print()
 
     #If R[h] = h, print the current solution and return
     if head.right == head:
-        for o in range(len(O)):
-            s = O[o].right
-            ans = O[o].head.name + ': '
-            while s != O[o]:
-                ans = ans + s.head.name + ': '
-                s = s.right
-            print(str(o) + '. ' + ans)
-        print('Backtrack number: ' + str(BACKTRACKS))
+        if not output:
+            for o in range(len(O)):
+                s = O[o].right
+                ans = O[o].head.name + ': '
+                while s != O[o]:
+                    ans = ans + s.head.name + ': '
+                    s = s.right
+                print(ans)
+            print('Backtrack number: ' + str(BACKTRACKS))
+        else:
+            out = open(output,'w')
+            out.write('Backtrack number: ' + str(BACKTRACKS) + '\n')
+
+            for o in range(len(O)):
+                s = O[o].right
+                ans = O[o].head.name + ': '
+                while s != O[o]:
+                    ans = ans + s.head.name + ': '
+                    s = s.right
+                if O[o] != O[-1]:
+                    out.write(ans + '\n')
+                else:
+                    out.write(ans)
+            print('Backtrack number: ' + str(BACKTRACKS))
+            print('Output answer to ' + output)
+            out.close()
+        return True
     else:
         #Otherwise choose a column object c
         curnode = head.right
@@ -116,7 +181,8 @@ def search(head,O = []):
             while j != r:
                 cover(j.head)
                 j = j.right
-            search(head,O)
+            if search(head,O,output,one_answer) and one_answer:
+                return True
             r = O.pop()
             #curnode = r.head
             j = r.left
@@ -128,7 +194,14 @@ def search(head,O = []):
         BACKTRACKS += 1
 
 
-    return True
+    return False
+
+def reset_nodes(head):
+    curnode = head.right
+    while curnode != head:
+        curnode.up = curnode
+        curnode.down = curnode
+        curnode = curnode.right
 
 def cover(col):
     #print('Covering column: ' + col.name)
